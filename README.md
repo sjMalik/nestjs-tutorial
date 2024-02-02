@@ -78,3 +78,22 @@ src/
 |-- tsconfig.build.json     // TypeScript configuration file specifically used for building the project
 |-- tsconfig.json           // TypeScript configuration file for project
 ```
+
+# Create Service Registry
+
+## Create a new NestJS project
+```
+nest new service-registry
+cd service-registry
+```
+
+## Install Required Packages
+```
+npm install --save @nestjs/microservices @nestjs/config class-validator class-transformer moment
+```
+
+##  Create a ServiceRegistryModule
+```
+nest generate module service-registry
+nest generate service service-registry
+nest generate controller service-registry

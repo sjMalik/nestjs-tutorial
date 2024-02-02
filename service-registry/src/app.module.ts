@@ -1,18 +1,11 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TasksModule } from './tasks/tasks.module';
-import { MongooseModule } from '@nestjs/mongoose';
+import { ServiceRegistryModule } from './service-registry/service-registry.module';
 import { HttpLoggerMiddleware } from './http-logger.middleware';
-import * as dotenv from 'dotenv';
-
-dotenv.config();
 
 @Module({
-  imports: [
-    MongooseModule.forRoot(process.env.MONGO_URI.toString()),
-    TasksModule,
-  ],
+  imports: [ServiceRegistryModule],
   controllers: [AppController],
   providers: [AppService],
 })
