@@ -18,7 +18,7 @@ import { AuthGuard } from './auth.guard';
 @Controller('users')
 @ApiBearerAuth()
 export class UsersController {
-  constructor(private readonly userService: UsersService) {}
+  constructor(private readonly userService: UsersService) { }
 
   @ApiOperation({
     summary: 'User Registration',
@@ -51,6 +51,7 @@ export class UsersController {
     description: 'Login to the system by providing email & password',
   })
   @Post('login')
+  @UsePipes(ValidationPipe)
   @ApiResponse({ status: 201, description: 'User created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   async login(@Body() loginDto: LoginUserDto) {
