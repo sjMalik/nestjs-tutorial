@@ -6,9 +6,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
-    .setTitle('Auth Service')
+    .setTitle('Email Service')
     .setVersion('0.0.1')
-    .setDescription('Authentication & Authorization')
+    .setDescription('Manage Draft, Inbox, Trash Emails, Send Emails APIs using NestJS & PostgreSQL')
     .addTag('auth-service')
     .addBearerAuth()
     .build();

@@ -8,7 +8,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Auth Service')
     .setVersion('0.0.1')
-    .setDescription('Authentication & Authorization')
+    .setDescription('Authentication & Authorization APIs with NestJS and PostgreSQL')
     .addTag('auth-service')
     .addBearerAuth()
     .build();

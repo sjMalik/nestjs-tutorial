@@ -16,8 +16,8 @@ async function bootstrap() {
   const logger = new Logger(name);
 
   const config = new DocumentBuilder()
-    .setTitle('My NestJS API')
-    .setDescription('API Description')
+    .setTitle('Task Service')
+    .setDescription('Task CRUD APIs with NestJS and MongoDB')
     .setVersion('1.0')
     .addTag('tasks')
     .build();
