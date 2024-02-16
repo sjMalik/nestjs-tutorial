@@ -8,7 +8,9 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Email Service')
     .setVersion('0.0.1')
-    .setDescription('Manage Draft, Inbox, Trash Emails, Send Emails APIs using NestJS & PostgreSQL')
+    .setDescription(
+      'Manage Draft, Inbox, Trash Emails, Send Emails APIs using NestJS & PostgreSQL',
+    )
     .addTag('mail-service')
     .addBearerAuth()
     .build();

@@ -119,19 +119,51 @@ export class MailboxService {
     }
   }
 
-  // async moveToTrash(userId: number, mailIds: number[]): Promise<void> {
-  //   // Remove duplicates from mailIds
-  //   const uniqueMailIds = [...new Set(mailIds)];
+  async moveToTrash(userId: number, mailIds: number[]): Promise<void> {
+    // Remove duplicates from mailIds
+    console.log(userId, mailIds)
+    const uniqueMailIds = [...new Set(mailIds)];
 
-  //   // Update mailbox_users table using TypeORM
-  //   await this.mailboxUsersRepository
-  //     .createQueryBuilder()
-  //     .update(MailboxUsers)
-  //     .set({ folder: 'TRASH' }) // Set folder to 'TRASH'
-  //     .where('mail.id IN (:...mailIds)', { uniqueMailIds }) // Filter by mailIds
-  //     .andWhere('userId = :userId', { userId }) // Filter by userId
-  //     .execute();
-  // }
+    // Update mailbox_users table using TypeORM
+    const query = this.mailboxUsersRepository
+      .createQueryBuilder()
+      .update(MailboxUsers)
+      .set({ folder: 'TRASH' }) // Set folder to 'TRASH'
+      .where('mail.id IN (:...mailIds)', { mailIds: uniqueMailIds }) // Filter by mailIds
+      .andWhere('userId = :userId', { userId }) // Filter by userId
+      .execute();
+
+    await query;
+  }
+
+  async markAsRead(userId: number, mailIds: number[]): Promise<void> {
+    console.log(userId, mailIds)
+    // Remove duplicates from mailIds
+    const uniqueMailIds = [...new Set(mailIds)];
+
+    // Update mailbox_users table using TypeORM
+    await this.mailboxUsersRepository
+      .createQueryBuilder()
+      .update(MailboxUsers)
+      .set({ status: UserStatus.READ }) // Set folder to 'TRASH'
+      .where('mail.id IN (:...mailIds)', { mailIds: uniqueMailIds }) // Filter by mailIds
+      .andWhere('userId = :userId', { userId }) // Filter by userId
+      .andWhere('role = :role', { role: UserRole.RECIPIENT })
+      .andWhere('status = :status', { status: UserStatus.UNREAD })
+      .execute();
+  }
+
+  async markAllAsRead(userId: number): Promise<void> {
+    // Update mailbox_users table using TypeORM
+    await this.mailboxUsersRepository
+      .createQueryBuilder()
+      .update(MailboxUsers)
+      .set({ status: UserStatus.READ }) // Set folder to 'READ'
+      .andWhere('userId = :userId', { userId }) // Filter by userId
+      .andWhere('role = :role', { role: UserRole.RECIPIENT })
+      .andWhere('status = :status', { status: UserStatus.UNREAD })
+      .execute();
+  }
 
   async fetchInboxOrSentMails(
     userId: number,
@@ -164,6 +196,86 @@ export class MailboxService {
         };
         return responseDto;
       }
+
+      const [results, totalCount] = await this.mailboxRepository
+        .createQueryBuilder('mailbox')
+        .innerJoinAndSelect('mailbox.mailboxUsers', 'mailboxUsers')
+        .where('mailbox.id IN (:...mailIds)', { mailIds })
+        .orderBy('mailbox.createdAt', 'DESC')
+        .offset(offset)
+        .limit(limit)
+        .getManyAndCount();
+
+      const mailboxDtos: MailboxDto[] = results.map((result) => {
+        const mailboxDto: MailboxDto = {
+          id: result.id,
+          parentId: result.parentId,
+          subject: result.subject,
+          message: result.message,
+          messageProps: result.messageProps,
+          attachments: result.attachments,
+          createdAt: result.createdAt,
+          mailboxUsers: result.mailboxUsers.map((user) => {
+            const mailboxUserDto: MailboxUserDto = {
+              id: user.id,
+              userId: user.userId,
+              name: user.name,
+              email: user.email,
+              role: user.role as UserRole,
+              status: user.status as UserStatus,
+              star: user.star,
+              folder: user.folder as UserFolder,
+              createdAt: user.createdAt,
+            };
+            return mailboxUserDto;
+          }),
+        };
+        return mailboxDto;
+      });
+
+      const responseDto: PaginatedMailsDto = {
+        results: mailboxDtos,
+        totalCount: totalCount,
+      };
+
+      return responseDto;
+    } catch (error) {
+      console.error('Failed to get the list InboxOrSentMail', error);
+      throw error; // Re-throwing error for NestJS to handle it
+    }
+  }
+
+  async fetchTrashMails(
+    userId: number,
+    page: number,
+    perPage: number,
+  ): Promise<PaginatedMailsDto> {
+    page = page ? page : 1;
+    perPage = perPage ? perPage : 10;
+    // Calculate offset and limit
+    const offset = (page - 1) * perPage;
+    const limit = perPage;
+
+    try {
+      const mails = await this.mailboxUsersRepository.query(
+        `
+        SELECT DISTINCT mailUsers."mailId" AS mail_id
+        FROM mailbox_users mailUsers
+        WHERE mailUsers."userId" = $1
+        AND mailUsers.folder = 'TRASH'
+      `,
+        [userId],
+      );
+
+      const mailIds = mails.map((mail) => mail.mail_id);
+      if (mailIds.length === 0) {
+        const responseDto: PaginatedMailsDto = {
+          results: [],
+          totalCount: 0,
+        };
+        return responseDto;
+      }
+      console.log(mailIds);
 
       const [results, totalCount] = await this.mailboxRepository
         .createQueryBuilder('mailbox')

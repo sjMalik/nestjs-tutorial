@@ -35,3 +35,7 @@ export class MailboxDto {
   @ArrayMinSize(1)
   mailboxUsers: MailboxUserDto[]; // Array of MailboxUserDto
 }
+
+export class MailIds {
+  ids: number[];
+}

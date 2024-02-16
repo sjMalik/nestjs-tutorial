@@ -13,6 +13,7 @@ import {
   ParseIntPipe,
   UsePipes,
   ValidationPipe,
+  Delete,
 } from '@nestjs/common';
 import { MailboxService } from './mailbox.service';
 import { CreateDraftMailDto } from './dtos/createDraftMail.dto';
@@ -21,6 +22,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SendMailDto } from './dtos/sendMail.dto';
 import { UserFolder, UserRole } from 'src/typeorm/mailbox_users.entity';
 import { PaginatedMailsDto } from './dtos/paginatedMail.dto';
+import { MailIds } from './dtos/mailbox.dto';
 
 @Controller('mailbox')
 @ApiBearerAuth()
@@ -84,6 +86,52 @@ export class MailboxController {
   }
 
   @ApiOperation({
+    summary: 'Mark mails as read',
+    description: 'Mark mails as read',
+  })
+  @ApiResponse({ status: 200, description: 'Read Mails successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard)
+  @Post('markasread')
+  async markAsRead(
+    @Req() req,
+    @Body() mailIds: MailIds,
+    @Res() res,
+  ): Promise<void> {
+    try {
+      await this.mailboxService.markAsRead(req.user.userId, mailIds.ids);
+      return res.status(HttpStatus.OK).end();
+    } catch (err) {
+      console.error(err);
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(err?.message);
+    }
+  }
+
+  @ApiOperation({
+    summary: 'Mark all mails as read',
+    description: 'Mark all mails as read',
+  })
+  @ApiResponse({ status: 200, description: 'Read all Mails successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard)
+  @UsePipes(ValidationPipe)
+  @Post('markallasread')
+  async markAllAsRead(
+    @Req() req,
+    @Res() res,
+  ): Promise<void> {
+    try {
+      await this.mailboxService.markAllAsRead(req.user.userId);
+      return res.status(HttpStatus.OK).end();
+    } catch (err) {
+      console.error(err);
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(err?.message);
+    }
+  }
+
+  @ApiOperation({
     summary: 'Send Email',
     description: 'Send Email',
   })
@@ -92,7 +140,7 @@ export class MailboxController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @UseGuards(AuthGuard)
   @UsePipes(ValidationPipe)
-  @Post(':mailid')
+  @Post(':mailid/send')
   async sendMail(
     @Req() req,
     @Body() sendMailDto: SendMailDto,
@@ -105,6 +153,57 @@ export class MailboxController {
     } catch (err) {
       console.error(err);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(err?.message);
+    }
+  }
+
+  @ApiOperation({
+    summary: 'Move mails to Trash',
+    description: 'Move mails to Trash',
+  })
+  @ApiResponse({ status: 200, description: 'Moving to Trash successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard)
+  @UsePipes(ValidationPipe)
+  @Delete('')
+  async trashMails(
+    @Req() req,
+    @Body() mailIds: MailIds,
+    @Res() res,
+  ): Promise<void> {
+    try {
+      await this.mailboxService.moveToTrash(req.user.userId, mailIds.ids);
+      return res.status(HttpStatus.OK).end();
+    } catch (err) {
+      console.error(err);
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(err?.message);
+    }
+  }
+
+  @ApiOperation({
+    summary: 'Get Trash Email List',
+    description: 'Get Trash Email List',
+  })
+  @ApiResponse({ status: 200, description: 'List Fetched successfully' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard)
+  @Get('trash')
+  async getTrashMails(
+    @Query('page', ParseIntPipe) page: number,
+    @Query('perPage', ParseIntPipe) perPage: number,
+    @Req() req,
+    @Res() res,
+  ): Promise<PaginatedMailsDto> {
+    try {
+      const draftMailObj = await this.mailboxService.fetchTrashMails(
+        req.user.userId,
+        page,
+        perPage,
+      );
+      return res.status(HttpStatus.OK).json(draftMailObj).end();
+    } catch (err) {
+      console.error(err);
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(err);
     }
   }
 
