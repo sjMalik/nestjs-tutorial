@@ -39,3 +39,8 @@ export class MailboxDto {
 export class MailIds {
   ids: number[];
 }
+
+export class StartUnstarBody {
+  ids: number[];
+  isStar: boolean;
+}

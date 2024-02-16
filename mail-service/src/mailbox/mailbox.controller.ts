@@ -22,7 +22,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SendMailDto } from './dtos/sendMail.dto';
 import { UserFolder, UserRole } from 'src/typeorm/mailbox_users.entity';
 import { PaginatedMailsDto } from './dtos/paginatedMail.dto';
-import { MailIds } from './dtos/mailbox.dto';
+import { MailIds, StartUnstarBody } from './dtos/mailbox.dto';
 
 @Controller('mailbox')
 @ApiBearerAuth()
@@ -262,6 +262,30 @@ export class MailboxController {
     } catch (err) {
       console.error(err);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(err.message);
+    }
+  }
+
+  @ApiOperation({
+    summary: 'Start/Unstart Mails',
+    description: 'Start/Unstart Mails',
+  })
+  @ApiResponse({ status: 200, description: 'Start/Unstart Mails successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard)
+  @UsePipes(ValidationPipe)
+  @Delete('')
+  async starUnstar(
+    @Req() req,
+    @Body() startUnstarBody: StartUnstarBody,
+    @Res() res,
+  ): Promise<void> {
+    try {
+      await this.mailboxService.startUnstarMail(req.user.userId, startUnstarBody.ids, startUnstarBody.isStar);
+      return res.status(HttpStatus.OK).end();
+    } catch (err) {
+      console.error(err);
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(err?.message);
     }
   }
 }

@@ -136,6 +136,21 @@ export class MailboxService {
     await query;
   }
 
+  async startUnstarMail(userId: number, mailIds: number[], isStar: boolean): Promise<void> {
+    const uniqueMailIds = [...new Set(mailIds)];
+
+    // Update mailbox_users table using TypeORM
+    const query = this.mailboxUsersRepository
+      .createQueryBuilder()
+      .update(MailboxUsers)
+      .set({ star: isStar }) // Set folder to 'TRASH'
+      .where('mail.id IN (:...mailIds)', { mailIds: uniqueMailIds }) // Filter by mailIds
+      .andWhere('userId = :userId', { userId }) // Filter by userId
+      .execute();
+
+    await query;
+  }
+
   async markAsRead(userId: number, mailIds: number[]): Promise<void> {
     console.log(userId, mailIds)
     // Remove duplicates from mailIds
