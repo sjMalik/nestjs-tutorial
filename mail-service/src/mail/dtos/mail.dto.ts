@@ -38,3 +38,12 @@ export class MailDto {
   @ArrayMinSize(1)
   mailUsers: MailUsersDto[];
 }
+
+export class MailIds {
+  ids: number[];
+}
+
+export class StarUnstarBody {
+  ids: number[];
+  isStar: boolean;
+}
